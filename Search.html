@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie Search App</title>
+    <style>
+        #app { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
+        #movieInput { padding: 10px; width: 300px; }
+        button { padding: 10px 20px; cursor: pointer; }
+        #movieResults { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 20px; }
+        .movie-card { width: 200px; border: 1px solid #ddd; padding: 10px; box-shadow: 2px 2px 8px rgba(0,0,0,0.1); cursor: pointer; }
+        .movie-card img { width: 100%; height: auto; }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <h1>Movie Search App</h1>
+        <input type="text" id="movieInput" placeholder="Search for a movie..." />
+        <button id="searchButton">Search</button>
+        <div id="movieResults"></div>
+        <div id="movieDetails"></div>
+    </div>
+
+    <script>
+        const apiKey = 'ac0c583e';
+
+        function searchMovie() {
+            const movie = document.getElementById('movieInput').value.trim();
+            if (!movie) return alert('Please enter a movie name');
+
+            fetch(`https://www.omdbapi.com/?apikey=${apiKey}&s=${movie}`)
+                .then(response => response.json())
+                .then(data => {
+                    const results = document.getElementById('movieResults');
+                    results.innerHTML = '';
+
+                    if (data.Response === "True") {
+                        data.Search.forEach(movie => {
+                            fetch(`https://www.omdbapi.com/?apikey=${apiKey}&t=${movie.Title}`)
+                                .then(response => response.json())
+                                .then(details => {
+                                    const movieCard = document.createElement('div');
+                                    movieCard.classList.add('movie-card');
+                                    movieCard.innerHTML = `
+                                        <img src="${movie.Poster !== 'N/A' ? movie.Poster : 'https://via.placeholder.com/200'}" alt="${movie.Title}" />
+                                        <h2>${movie.Title}</h2>
+                                        <p>Year: ${movie.Year}</p>
+                                        <p>Rated: ${details.Rated}</p>
+                                    `;
+                                    movieCard.addEventListener('click', () => showMovieDetails(details));
+                                    results.appendChild(movieCard);
+                                });
+                        });
+                    } else {
+                        results.innerHTML = `<p>No movies found!</p>`;
+                    }
+                })
+                .catch(err => console.error('Error fetching data:', err));
+        }
+
+        function showMovieDetails(details) {
+            const movieDetails = document.getElementById('movieDetails');
+            movieDetails.innerHTML = `
+                <h2>${details.Title} (${details.Year})</h2>
+                <img src="${details.Poster !== 'N/A' ? details.Poster : 'https://via.placeholder.com/200'}" alt="${details.Title}" />
+                <p><strong>Rated:</strong> ${details.Rated}</p>
+                <p><strong>Released:</strong> ${details.Released}</p>
+                <p><strong>Genre:</strong> ${details.Genre}</p>
+                <p><strong>Director:</strong> ${details.Director}</p>
+                <p><strong>Actors:</strong> ${details.Actors}</p>
+                <p><strong>Plot:</strong> ${details.Plot}</p>
+                <p><strong>IMDB Rating:</strong> ${details.imdbRating}</p>
+            `;
+        }
+
+        document.getElementById('searchButton').addEventListener('click', searchMovie);
+    </script>
+</body>
+</html>
